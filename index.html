@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Travel Planner</title>
+        <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                font-family: system-ui, sans-serif;
+                line-height: 1.5;
+                color: #000;
+                padding: 3rem 1rem;
+            }
+            main {
+                max-width: 720px;
+                margin: 0 auto;
+            }
+            h1 {
+                font-size: 1.75rem;
+                margin-bottom: 0.5rem;
+            }
+            .sub {
+                color: #555;
+                margin-bottom: 0.25rem;
+            }
+            .steps {
+                font-size: 0.85rem;
+                color: #999;
+                margin-bottom: 2rem;
+            }
+            form {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 1rem;
+                align-items: flex-end;
+                padding-bottom: 2rem;
+                border-bottom: 1px solid #e0e0e0;
+            }
+            label {
+                display: flex;
+                flex-direction: column;
+                gap: 0.25rem;
+                font-size: 0.75rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                color: #999;
+            }
+            label.city {
+                flex: 1 1 200px;
+            }
+            input,
+            select {
+                padding: 0.5rem 0;
+                border: none;
+                border-bottom: 1px solid #e0e0e0;
+                font-size: 1rem;
+                font-family: inherit;
+                background: transparent;
+                outline: none;
+                color: #000;
+            }
+            input:focus,
+            select:focus {
+                border-bottom-color: #000;
+            }
+            button {
+                padding: 0.75rem 1.5rem;
+                background: #000;
+                color: #fff;
+                border: none;
+                font-size: 0.75rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                cursor: pointer;
+            }
+            button:disabled {
+                opacity: 0.3;
+                cursor: default;
+            }
+            button.link {
+                background: none;
+                color: #555;
+                padding: 0;
+                text-decoration: underline;
+            }
+            #status {
+                display: none;
+                align-items: center;
+                gap: 0.75rem;
+                margin-top: 2rem;
+                color: #555;
+            }
+            .spinner {
+                width: 1rem;
+                height: 1rem;
+                border: 2px solid #e0e0e0;
+                border-top-color: #000;
+                border-radius: 50%;
+                animation: spin 0.8s linear infinite;
+            }
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+            #result {
+                display: none;
+                margin-top: 2rem;
+            }
+            .day {
+                border: 1px solid #e0e0e0;
+                padding: 1rem 1.25rem;
+                margin-bottom: 1rem;
+            }
+            .day h2 {
+                font-size: 1rem;
+                display: flex;
+                justify-content: space-between;
+                gap: 1rem;
+                margin-bottom: 0.5rem;
+            }
+            .prefs {
+                flex: 1 1 100%;
+            }
+            .prefs-head {
+                display: flex;
+                justify-content: space-between;
+                font-size: 0.75rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                color: #999;
+                margin-bottom: 0.25rem;
+            }
+            .md {
+                border: 1px solid #e0e0e0;
+                padding: 0.5rem 1rem;
+                max-height: 12rem;
+                overflow-y: auto;
+                font-size: 0.9rem;
+                cursor: text;
+            }
+            .md h1,
+            .md h2,
+            .md h3 {
+                font-size: 0.95rem;
+                margin: 0.75rem 0 0.25rem;
+            }
+            .md p,
+            .md ul,
+            .md ol {
+                margin: 0.25rem 0;
+            }
+            .md ul,
+            .md ol {
+                padding-left: 1.25rem;
+            }
+            #prefs {
+                height: 12rem;
+                min-height: 5rem;
+                max-height: none;
+                resize: vertical;
+                overflow: auto;
+                outline: none;
+            }
+            #prefs:focus {
+                border-color: #000;
+            }
+            .md:empty::before {
+                content: attr(data-placeholder);
+                color: #999;
+            }
+            .day p,
+            .plain {
+                white-space: pre-wrap;
+            }
+            .plain.notes {
+                color: #555;
+                font-size: 0.9rem;
+            }
+            .tools {
+                margin-top: 2rem;
+            }
+            .tools[hidden] {
+                display: none;
+            }
+            .tools > summary {
+                font-size: 0.75rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                color: #999;
+                cursor: pointer;
+                margin-bottom: 0.5rem;
+            }
+            .tool {
+                font-family: ui-monospace, monospace;
+                font-size: 0.75rem;
+                color: #555;
+                background: #f5f5f5;
+                border-left: 3px solid #f59e0b;
+                padding: 0.5rem 0.75rem;
+                margin-bottom: 0.5rem;
+                word-break: break-word;
+            }
+            .tool summary {
+                cursor: pointer;
+            }
+            .tool .name {
+                color: #b45309;
+            }
+            .tool pre {
+                white-space: pre-wrap;
+                margin-top: 0.5rem;
+                max-height: 12rem;
+                overflow-y: auto;
+            }
+            #tweak {
+                display: flex;
+                gap: 1rem;
+                margin-top: 1.5rem;
+            }
+            #tweak input {
+                flex: 1;
+            }
+            #reset {
+                margin-top: 1.5rem;
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <h1>Travel Planner</h1>
+            <p class="sub">
+                Plans each day of your trip as outdoor or indoor, based on
+                typical weather and your past trips.
+            </p>
+            <p class="steps">
+                1 Check weather &rarr; 2 Match your travel style &rarr; 3 Add
+                travel times
+            </p>
+
+            <form id="form">
+                <label class="city">
+                    City
+                    <input id="city" placeholder="Lisbon" required />
+                </label>
+                <label>
+                    Start date
+                    <input id="date" type="date" required />
+                </label>
+                <label>
+                    Days
+                    <select id="days">
+                        <option>1</option>
+                        <option>2</option>
+                        <option selected>3</option>
+                        <option>4</option>
+                        <option>5</option>
+                        <option>6</option>
+                        <option>7</option>
+                    </select>
+                </label>
+                <div class="prefs">
+                    <div class="prefs-head">
+                        <span>Your travel preferences (click below to edit)</span>
+                    </div>
+                    <div
+                        id="prefs"
+                        class="md"
+                        contenteditable="true"
+                        data-placeholder="Type your own travel preferences, e.g. I like slow mornings and street food. Leave blank to use the default."
+                    ></div>
+                </div>
+                <button id="go" type="submit">Plan my trip</button>
+            </form>
+
+            <div id="status">
+                <div class="spinner"></div>
+                <span>Planning... this takes 1-2 minutes.</span>
+            </div>
+
+            <details id="tools" class="tools" hidden>
+                <summary id="tools-title"></summary>
+                <div id="tools-list"></div>
+            </details>
+
+            <div id="result">
+                <div id="plan"></div>
+                <form id="tweak">
+                    <input
+                        id="tweak-input"
+                        placeholder="Tweak it, e.g. make day 2 more relaxed"
+                        autocomplete="off"
+                    />
+                    <button id="tweak-btn" type="submit">Send</button>
+                </form>
+                <button id="reset" class="link" type="button">Start over</button>
+            </div>
+        </main>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/turndown/7.1.3/turndown.min.js"></script>
+        <script>
+            const $ = (id) => document.getElementById(id);
+            let sessionId = null;
+
+            function setBusy(busy) {
+                $("status").style.display = busy ? "flex" : "none";
+                $("go").disabled = busy;
+                $("tweak-btn").disabled = busy;
+            }
+
+            function el(tag, className, text) {
+                const e = document.createElement(tag);
+                if (className) e.className = className;
+                if (text !== undefined) e.textContent = text;
+                return e;
+            }
+
+            // Split the plain-text reply into day cards; fall back to raw text.
+            function render(text) {
+                const plan = $("plan");
+                plan.replaceChildren();
+                const parts = text.split(/^(?=Day \d+)/m);
+                const hasDays = parts.some((p) => /^Day \d+/.test(p));
+                if (!hasDays) {
+                    plan.appendChild(el("p", "plain", text));
+                    return;
+                }
+                parts.forEach((part, i) => {
+                    part = part.trim();
+                    if (!part) return;
+                    if (!/^Day \d+/.test(part)) {
+                        plan.appendChild(el("p", "plain", part));
+                        return;
+                    }
+                    const [head, ...rest] = part.split("\n");
+                    const card = el("div", "day");
+                    card.appendChild(el("h2", "", head));
+                    // Last block of the final day may hold the closing notes.
+                    const body = rest.join("\n");
+                    const split = body.split(/\n\s*\n/);
+                    card.appendChild(el("p", "", split[0].trim()));
+                    plan.appendChild(card);
+                    if (split.length > 1) {
+                        plan.appendChild(
+                            el("p", "plain notes", split.slice(1).join("\n\n").trim()),
+                        );
+                    }
+                });
+            }
+
+            // One tool call: name(args), click for the result.
+            function addTool(call) {
+                const d = el("details", "tool");
+                const s = el("summary");
+                s.appendChild(el("span", "name", call.name));
+                s.appendChild(document.createTextNode("(" + JSON.stringify(call.args) + ")"));
+                d.appendChild(s);
+                d.appendChild(el("pre", "", call.result));
+                $("tools-list").appendChild(d);
+                $("tools-title").textContent = "Tool calls (" + $("tools-list").children.length + ")";
+            }
+
+            // Read the NDJSON stream: tool calls arrive live, then one "done" event.
+            async function send(message) {
+                setBusy(true);
+                $("result").style.display = "none";
+                $("tools-list").replaceChildren();
+                $("tools-title").textContent = "Tool calls (0)";
+                $("tools").hidden = false;
+                $("tools").open = true; // visible while the agent works
+                let done = null;
+                try {
+                    const res = await fetch("/chat/stream", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            message,
+                            session_id: sessionId,
+                            preferences: getPrefs(),
+                        }),
+                    });
+                    const reader = res.body.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = "";
+                    const handle = (line) => {
+                        if (!line.trim()) return;
+                        const ev = JSON.parse(line);
+                        if (ev.type === "tool_call") addTool(ev);
+                        else done = ev;
+                    };
+                    for (;;) {
+                        const { value, done: finished } = await reader.read();
+                        if (finished) break;
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split("\n");
+                        buffer = lines.pop();
+                        lines.forEach(handle);
+                    }
+                    handle(buffer);
+                } catch (e) {
+                    render("Error: " + e.message);
+                }
+                if (done) {
+                    sessionId = done.session_id;
+                    render(done.response);
+                }
+                $("tools").open = false; // collapse once the plan is ready
+                $("tools").hidden = !$("tools-list").children.length;
+                $("result").style.display = "block";
+                setBusy(false);
+            }
+
+            // Preferences: an editable box that stays rendered. The markdown is turned into
+            // HTML once on load; the user's edits are turned back into markdown on send.
+            function setPrefs(markdown) {
+                const box = $("prefs");
+                if (window.marked && window.DOMPurify) {
+                    box.innerHTML = DOMPurify.sanitize(marked.parse(markdown));
+                } else {
+                    box.style.whiteSpace = "pre-wrap";
+                    box.textContent = markdown;
+                }
+            }
+
+            function getPrefs() {
+                const box = $("prefs");
+                if (window.TurndownService) {
+                    return new TurndownService({ headingStyle: "atx", bulletListMarker: "-" })
+                        .turndown(box.innerHTML)
+                        .trim();
+                }
+                return box.innerText.trim();
+            }
+
+            // Paste as plain text so outside styling doesn't leak into the box.
+            $("prefs").addEventListener("paste", (e) => {
+                e.preventDefault();
+                document.execCommand(
+                    "insertText",
+                    false,
+                    e.clipboardData.getData("text/plain"),
+                );
+            });
+
+            $("form").addEventListener("submit", (e) => {
+                e.preventDefault();
+                const days = $("days").value;
+                send(
+                    days + " days in " + $("city").value.trim() +
+                        " starting " + $("date").value,
+                );
+            });
+
+            $("tweak").addEventListener("submit", (e) => {
+                e.preventDefault();
+                const text = $("tweak-input").value.trim();
+                if (!text) return;
+                $("tweak-input").value = "";
+                send(text);
+            });
+
+            $("reset").addEventListener("click", async () => {
+                if (sessionId) {
+                    fetch("/clear?session_id=" + encodeURIComponent(sessionId), {
+                        method: "POST",
+                    });
+                }
+                sessionId = null;
+                $("result").style.display = "none";
+                $("plan").replaceChildren();
+                $("tools").hidden = true;
+                $("tools-list").replaceChildren();
+                $("city").focus();
+            });
+
+            fetch("/context")
+                .then((r) => r.json())
+                .then((d) => {
+                    setPrefs(d.context);
+                })
+                .catch(() => {});
+
+            $("date").min = new Date().toISOString().slice(0, 10);
+            $("city").focus();
+        </script>
+    </body>
+</html>
